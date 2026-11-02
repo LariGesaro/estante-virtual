@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estante Virtual com Autenticação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcf8f2;
+            color: #3d2c1e;
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .shelf-bg {
+            background: linear-gradient(180deg, #8b5a2b 0%, #654321 100%);
+            box-shadow: inset 0 10px 10px -5px rgba(0, 0, 0, 0.4), 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+
+    <!-- TELA DE AUTENTICAÇÃO (Login / Cadastro) -->
+    <div id="auth-container"
+        class="max-w-md mx-auto w-full my-auto bg-white border border-amber-200 rounded-2xl p-8 shadow-lg">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-amber-900 font-serif">📚 Estante Virtual</h1>
+            <p id="auth-subtitle" class="text-sm text-amber-700 mt-1">Faça login para acessar sua estante privada</p>
+        </div>
+
+        <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">E-mail</label>
+                <input type="email" id="auth-email" required
+                    class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Senha</label>
+                <input type="password" id="auth-password" required
+                    class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div id="auth-error" class="text-xs text-rose-600 text-center font-medium hidden"></div>
+
+            <button type="submit" id="auth-btn"
+                class="w-full py-3 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl font-medium shadow transition">Entrar</button>
+        </form>
+
+        <div class="text-center mt-6 pt-4 border-t border-amber-100">
+            <button onclick="toggleAuthMode()" id="auth-toggle-text"
+                class="text-xs text-amber-800 hover:underline font-medium">Não tem uma conta? Cadastre-se</button>
+        </div>
+    </div>
+
+    <!-- APLICAÇÃO PRINCIPAL (Oculta até o usuário logar) -->
+    <div id="app-container" class="max-w-5xl mx-auto w-full hidden">
+        <header
+            class="bg-amber-100 border border-amber-200 rounded-2xl p-6 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-amber-900 flex items-center gap-2">📚 Estante Virtual</h1>
+                <p class="text-amber-800 text-sm mt-1" id="user-welcome">Bem-vindo(a) de volta!</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openModal()"
+                    class="bg-amber-800 hover:bg-amber-900 text-amber-50 px-4 py-2.5 rounded-xl font-medium shadow transition text-sm">✨
+                    Adicionar Livro</button>
+                <button onclick="logout()"
+                    class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-4 py-2.5 rounded-xl font-medium transition text-sm">Sair</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
+                <span class="text-2xl font-bold text-amber-900" id="stat-total">0</span>
+                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Total</p>
+            </div>
+            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
+                <span class="text-2xl font-bold text-emerald-700" id="stat-read">0</span>
+                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Lidos</p>
+            </div>
+            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
+                <span class="text-2xl font-bold text-blue-700" id="stat-reading">0</span>
+                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Lendo</p>
+            </div>
+            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
+                <span class="text-2xl font-bold text-amber-700" id="stat-rating">0.0</span>
+                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Média</p>
+            </div>
+        </div>
+
+        <div class="shelf-bg rounded-2xl p-6 min-h-[350px] relative">
+            <div class="absolute top-2 left-6 text-amber-200/60 text-xs font-serif uppercase tracking-widest">Sua
+                Prateleira Privada</div>
+            <div id="books-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Cadastro/Edição de Livro -->
+    <div id="book-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-amber-100">
+            <h2 id="modal-title" class="text-2xl font-bold text-amber-900 mb-4">Adicionar Livro</h2>
+            <form id="book-form" onsubmit="handleBookSubmit(event)" class="space-y-4">
+                <input type="hidden" id="book-id">
+                <div>
+                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Título</label>
+                    <input type="text" id="title" required
+                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Autor(a)</label>
+                    <input type="text" id="author" required
+                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Categoria</label>
+                        <input type="text" id="category" placeholder="Ex: Ficção" required
+                            class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Status</label>
+                        <select id="status"
+                            class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                            <option value="Quero Ler">Quero Ler</option>
+                            <option value="Lendo">Lendo</option>
+                            <option value="Lido">Lido</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Avaliação (1 a
+                        5)</label>
+                    <input type="number" id="rating" min="1" max="5" value="5"
+                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Resenha</label>
+                    <textarea id="review" rows="3"
+                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 rounded-xl border border-amber-200 text-amber-800 hover:bg-amber-50">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-amber-800 text-amber-50 hover:bg-amber-900 font-medium">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-xs text-amber-800/80 mt-12 border-t border-amber-200/50">
+        Desenvolvido por Larissa Domiciano Gesaro - 6° período Engenharia de Software
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let isRegisterMode = false;
+
+        // Verificar se já existe token salvo ao abrir
+        window.onload = function () {
+            const token = localStorage.getItem('token');
+            const email = localStorage.getItem('email');
+            if (token) {
+                showApp(email);
+            }
+        };
+
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-subtitle').innerText = isRegisterMode ? 'Crie sua conta para começar' : 'Faça login para acessar sua estante privada';
+            document.getElementById('auth-btn').innerText = isRegisterMode ? 'Cadastrar' : 'Entrar';
+            document.getElementById('auth-toggle-text').innerText = isRegisterMode ? 'Já tem uma conta? Faça login' : 'Não tem uma conta? Cadastre-se';
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+
+        async function handleAuth(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const endpoint = isRegisterMode ? '/register' : '/login';
+            const errorDiv = document.getElementById('auth-error');
+
+            try {
+                const res = await fetch(API_URL + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Erro na autenticação');
+
+                if (isRegisterMode) {
+                    alert('Cadastro realizado com sucesso! Faça login.');
+                    toggleAuthMode();
+                } else {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('email', data.email);
+                    showApp(data.email);
+                }
+            } catch (err) {
+                errorDiv.innerText = err.message;
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('email');
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('auth-form').reset();
+        }
+
+        function showApp(email) {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('user-welcome').innerText = `Logado como: ${email}`;
+            fetchBooks();
+        }
+
+        async function fetchBooks() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(API_URL + '/books', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                    return;
+                }
+                const books = await res.json();
+                renderBooks(books);
+                updateStats(books);
+            } catch (err) {
+                console.error("Erro ao buscar livros:", err);
+            }
+        }
+
+        function renderBooks(books) {
+            const container = document.getElementById('books-container');
+            container.innerHTML = '';
+            if (books.length === 0) {
+                container.innerHTML = `<p class="text-amber-100 col-span-full text-center py-8">Sua estante está vazia. Clique em "Adicionar Livro"!</p>`;
+                return;
+            }
+
+            books.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'bg-white/95 backdrop-blur border border-amber-200/50 rounded-2xl p-5 shadow-md flex flex-col justify-between transition hover:-translate-y-1';
+                const statusColor = book.status === 'Lido' ? 'bg-emerald-100 text-emerald-800' : book.status === 'Lendo' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-2">
+                            <span class="text-xs px-2.5 py-1 rounded-full font-medium ${statusColor}">${book.status}</span>
+                            <span class="text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded">${book.category}</span>
+                        </div>
+                        <h3 class="font-serif font-bold text-lg text-amber-900 leading-snug">${book.title}</h3>
+                        <p class="text-xs text-amber-700/80 mb-3">por ${book.author}</p>
+                        <div class="text-amber-500 text-sm mb-2">${'★'.repeat(book.rating)}${'☆'.repeat(5 - book.rating)}</div>
+                        <p class="text-xs text-amber-900/70 italic bg-amber-50/50 p-2.5 rounded-xl mb-4 line-clamp-3">"${book.review || 'Sem resenha.'}"</p>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2 border-t border-amber-100">
+                        <button onclick="editBook(${book.id}, '${escapeHtml(book.title)}', '${escapeHtml(book.author)}', '${escapeHtml(book.category)}', '${book.status}', ${book.rating}, '${escapeHtml(book.review)}')" class="text-xs px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 font-medium">Editar</button>
+                        <button onclick="deleteBook(${book.id})" class="text-xs px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-medium">Excluir</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateStats(books) {
+            document.getElementById('stat-total').innerText = books.length;
+            document.getElementById('stat-read').innerText = books.filter(b => b.status === 'Lido').length;
+            document.getElementById('stat-reading').innerText = books.filter(b => b.status === 'Lendo').length;
+            const totalRating = books.reduce((acc, b) => acc + (Number(b.rating) || 0), 0);
+            document.getElementById('stat-rating').innerText = books.length > 0 ? (totalRating / books.length).toFixed(1) : '0.0';
+        }
+
+        function openModal() {
+            document.getElementById('book-form').reset();
+            document.getElementById('book-id').value = '';
+            document.getElementById('modal-title').innerText = 'Adicionar Livro';
+            document.getElementById('book-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('book-modal').classList.add('hidden');
+        }
+
+        function editBook(id, title, author, category, status, rating, review) {
+            document.getElementById('book-id').value = id;
+            document.getElementById('title').value = title;
+            document.getElementById('author').value = author;
+            document.getElementById('category').value = category;
+            document.getElementById('status').value = status;
+            document.getElementById('rating').value = rating;
+            document.getElementById('review').value = review === 'null' ? '' : review;
+            document.getElementById('modal-title').innerText = 'Editar Livro';
+            document.getElementById('book-modal').classList.remove('hidden');
+        }
+
+        async function handleBookSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('book-id').value;
+            const token = localStorage.getItem('token');
+            const bookData = {
+                title: document.getElementById('title').value,
+                author: document.getElementById('author').value,
+                category: document.getElementById('category').value,
+                status: document.getElementById('status').value,
+                rating: Number(document.getElementById('rating').value),
+                review: document.getElementById('review').value
+            };
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_URL}/books/${id}` : `${API_URL}/books`;
+
+            await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(bookData)
+            });
+
+            closeModal();
+            fetchBooks();
+        }
+
+        async function deleteBook(id) {
+            if (confirm('Deseja realmente excluir este livro?')) {
+                const token = localStorage.getItem('token');
+                await fetch(`${API_URL}/books/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                fetchBooks();
+            }
+        }
+
+        function escapeHtml(str) {
+            return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+        }
+    </script>
+</body>
+
+</html>
