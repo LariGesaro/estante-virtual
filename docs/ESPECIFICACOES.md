@@ -14,7 +14,7 @@ O projeto Estante Virtual, é uma aplicação full-stack que se trata de um gere
 
  * **BackEnd**
     * Node.js: Servidor JavaScript (ambiente de execução)
-    * Express.js: Framework para criação das rotas HTTP/RESTful
+    * Express.js: Framework para criação das rotas HTTP/RESTful e middlewares
     * SQLite3: Banco de dados baseado em arquivo local
     * Bcrypt.js: Algoritmo de hash criptografico para armazenamento seguro das senhas
     * JSON Web Token (JWT): Mecanismo de autentificação sem estado para proteção de rotas privadas
@@ -30,14 +30,17 @@ O projeto Estante Virtual, é uma aplicação full-stack que se trata de um gere
  A API foi projetada seguindo a arquitetura REST, utilizando JSON para a troca de dados e cabeçalhos HTTP para controle de autentificação.
     * Endpoints da API
 
-   | Método | Rota           | Protegida (JWT)? | Descrição                                                     |
-   |--------|----------------|------------------|---------------------------------------------------------------|
-   | POST   | /api/register  | Não              | Cria uma nova conta de usuário (com hash de senha via Bcrypt) |
-   | POST   | /api/login     | Não              | Autentica o usuário e retorna o Token JWT                     |
-   | GET    | /api/books     | Sim              | Retorna a lista de livros pertencentes ao usuário autenticado |
-   | POST   | /api/books     | Sim              | Cadastra um novo livro na estante do usuário                  |
-   | PUT    | /api/books/:id | Sim              | Atualiza os dados de um livro existente pelo seu ID           |
-   | DELETE | /api/books/:id | Sim              | Remove um livro especifico da estante                         |
+   | Método | Rota                      | Protegida (JWT)? | Descrição                                                         |
+   |--------|---------------------------|------------------|-------------------------------------------------------------------|
+   | POST   | /api/register             | Não              | Cria uma nova conta de usuário (com hash de senha via Bcrypt)     |
+   | POST   | /api/login                | Não              | Autentica o usuário e retorna o Token JWT                         |
+   | POST   | /api/reset-password       | Não              | Redefine a senha de um usuário via email direto do banco de dados |
+   | GET    | /api/profile              | Sim              | Retorna os dados cadastrais e a meta de leitura do usuário        | 
+   | PUT    | /api/profile              | Sim              | Atualiza as configurações de perfil (meta de leitura)             |
+   | POST   | /api/books                | Sim              | Cadastra um novo livro na estante do usuário                      |
+   | GET    | /api/books                | Sim              | Retorna a lista de livros pertencentes ao usuário autenticado     |
+   | PUT    | /api/books/:id            | Sim              | Atualiza os dados de um livro existente pelo seu ID               |
+   | DELETE | /api/books/:id            | Sim              | Remove um livro especifico da estante                             |
    
    **Fluxo de autenticação**
      1. Autenticação: Na rota `/api/login`, o back-end valida as credenciais e gera um token JWT contendo `id` e `email` do usuário
@@ -59,8 +62,9 @@ O projeto Estante Virtual, é uma aplicação full-stack que se trata de um gere
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    reading_goal INTEGER DEFAULT 12,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);/`
+);`
 
 ---
 
@@ -77,6 +81,7 @@ O projeto Estante Virtual, é uma aplicação full-stack que se trata de um gere
     status TEXT CHECK(status IN ('Quero Ler', 'Lendo', 'Lido')) DEFAULT 'Quero Ler',
     rating INTEGER CHECK(rating BETWEEN 1 AND 5),
     review TEXT,
+    cover_image TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );`
@@ -107,8 +112,15 @@ O projeto Estante Virtual, é uma aplicação full-stack que se trata de um gere
 ## Funcionalidade principais
 
  * **Autentificação de usuário**
-    * Cadastro de novas contas com verificação de e-mail e hash de senha via `Bcrypt`
+    * Cadastro de novas contas com confirmação de senha, e Recuperação de senha direta
     * Login e emissão de token JWT armazenado no `localStorage`
+
+---
+
+* **Personalizaçõ de Perfil e Interface**
+   * Modo Escuro: Suporte a tema claro e escuro com persistência da preferência no `localStorage`
+   * Perfil do Usuário: Personalização de nome em exibição, avatar (foto de perfil) e meta de leitura.
+
 ---
 
  * **Gerenciamento de livros**
@@ -120,6 +132,7 @@ O projeto Estante Virtual, é uma aplicação full-stack que se trata de um gere
 
  * **Painel de estatisticas**
     * Calculo automático de total de livros, quantidade de lidos/lendo e média das notas.
+    * Identificação automática de genero favorito (com base na categoria mais frequentemente cadastrada)
 ---
 
  * **Compatibilidade multiambiente**

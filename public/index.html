@@ -4,16 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estante Virtual com Autenticação</title>
+    <title>Estante Virtual - Engenharia de Software</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #fcf8f2;
-            color: #3d2c1e;
+        }
+
+        .shelf-bg {
+            background: linear-gradient(180deg, #8b5a2b 0%, #654321 100%);
+            box-shadow: inset 0 10px 10px -5px rgba(0, 0, 0, 0.4), 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark .shelf-bg {
+            background: linear-gradient(180deg, #2c1810 0%, #1a0f0a 100%);
+            box-shadow: inset 0 10px 10px -5px rgba(0, 0, 0, 0.8), 0 8px 15px rgba(0, 0, 0, 0.4);
         }
 
         h1,
@@ -22,119 +33,205 @@
         .font-serif {
             font-family: 'Playfair Display', serif;
         }
-
-        .shelf-bg {
-            background: linear-gradient(180deg, #8b5a2b 0%, #654321 100%);
-            box-shadow: inset 0 10px 10px -5px rgba(0, 0, 0, 0.4), 0 8px 15px rgba(0, 0, 0, 0.15);
-        }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+<body
+    class="min-h-screen flex flex-col justify-between p-4 md:p-8 bg-[#fcf8f2] text-[#3d2c1e] dark:bg-[#121212] dark:text-[#f3e9dc] transition-colors duration-300">
 
-    <!-- TELA DE AUTENTICAÇÃO (Login / Cadastro) -->
+    <!-- TELA DE AUTENTICAÇÃO -->
     <div id="auth-container"
-        class="max-w-md mx-auto w-full my-auto bg-white border border-amber-200 rounded-2xl p-8 shadow-lg">
+        class="max-w-md mx-auto w-full my-auto bg-white dark:bg-[#1e1e1e] border border-amber-200 dark:border-amber-900/50 rounded-2xl p-8 shadow-lg transition-colors">
         <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-amber-900 font-serif">📚 Estante Virtual</h1>
-            <p id="auth-subtitle" class="text-sm text-amber-700 mt-1">Faça login para acessar sua estante privada</p>
+            <h1 class="text-3xl font-bold text-amber-900 dark:text-amber-400 font-serif">📚 Estante Virtual</h1>
+            <p id="auth-subtitle" class="text-sm text-amber-700 dark:text-amber-300/80 mt-1">Faça login para acessar sua
+                estante privada</p>
+        </div>
+
+        <div class="flex border-b border-amber-200 dark:border-amber-900 mb-6">
+            <button onclick="switchAuthTab('login')" id="tab-login"
+                class="flex-1 pb-2 text-sm font-bold text-amber-900 dark:text-amber-400 border-b-2 border-amber-800 dark:border-amber-500 transition">Entrar</button>
+            <button onclick="switchAuthTab('register')" id="tab-register"
+                class="flex-1 pb-2 text-sm font-semibold text-amber-600 dark:text-amber-500/70 hover:text-amber-900 dark:hover:text-amber-300 transition">Cadastrar</button>
+            <button onclick="switchAuthTab('recover')" id="tab-recover"
+                class="flex-1 pb-2 text-sm font-semibold text-amber-600 dark:text-amber-500/70 hover:text-amber-900 dark:hover:text-amber-300 transition">Recuperar</button>
         </div>
 
         <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">E-mail</label>
+                <label
+                    class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">E-mail</label>
                 <input type="email" id="auth-email" required
-                    class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                    class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent focus:ring-2 focus:ring-amber-500 outline-none">
             </div>
-            <div>
-                <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Senha</label>
-                <input type="password" id="auth-password" required
-                    class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+
+            <div id="password-field-container">
+                <label id="password-label"
+                    class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Senha</label>
+                <input type="password" id="auth-password"
+                    class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent focus:ring-2 focus:ring-amber-500 outline-none">
             </div>
-            <div id="auth-error" class="text-xs text-rose-600 text-center font-medium hidden"></div>
+
+            <div id="confirm-password-container" class="hidden">
+                <label
+                    class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Confirmar
+                    Senha</label>
+                <input type="password" id="auth-confirm-password"
+                    class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+
+            <div id="auth-error" class="text-xs text-rose-600 dark:text-rose-400 text-center font-medium hidden"></div>
+            <div id="auth-success"
+                class="text-xs text-emerald-600 dark:text-emerald-400 text-center font-medium hidden"></div>
 
             <button type="submit" id="auth-btn"
-                class="w-full py-3 bg-amber-800 hover:bg-amber-900 text-amber-50 rounded-xl font-medium shadow transition">Entrar</button>
+                class="w-full py-3 bg-amber-800 hover:bg-amber-900 dark:bg-amber-700 dark:hover:bg-amber-600 text-amber-50 rounded-xl font-medium shadow transition">Entrar</button>
         </form>
-
-        <div class="text-center mt-6 pt-4 border-t border-amber-100">
-            <button onclick="toggleAuthMode()" id="auth-toggle-text"
-                class="text-xs text-amber-800 hover:underline font-medium">Não tem uma conta? Cadastre-se</button>
-        </div>
     </div>
 
-    <!-- APLICAÇÃO PRINCIPAL (Oculta até o usuário logar) -->
+    <!-- TELA PRINCIPAL (ESTANTE) -->
     <div id="app-container" class="max-w-5xl mx-auto w-full hidden">
         <header
-            class="bg-amber-100 border border-amber-200 rounded-2xl p-6 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-amber-900 flex items-center gap-2">📚 Estante Virtual</h1>
-                <p class="text-amber-800 text-sm mt-1" id="user-welcome">Bem-vindo(a) de volta!</p>
+            class="bg-amber-100 dark:bg-[#1e1e1e] border border-amber-200 dark:border-amber-900/50 rounded-2xl p-6 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors">
+            <div class="flex items-center gap-4">
+                <img id="user-avatar" src="https://ui-avatars.com/api/?name=Usuario&background=8b5a2b&color=fff"
+                    alt="Avatar" class="w-12 h-12 rounded-full border-2 border-amber-800 shadow-sm">
+                <div>
+                    <h1 class="text-2xl font-bold text-amber-900 dark:text-amber-400 font-serif" id="user-display-name">
+                        Estante Virtual</h1>
+                    <p class="text-amber-800 dark:text-amber-300/80 text-sm" id="user-welcome">Bem-vindo(a)!</p>
+                </div>
             </div>
             <div class="flex items-center gap-3">
+                <button onclick="openProfileModal()"
+                    class="bg-amber-200 dark:bg-amber-900/60 hover:bg-amber-300 text-amber-900 dark:text-amber-200 px-3.5 py-2.5 rounded-xl font-medium transition text-sm flex items-center gap-1">
+                    👤 Perfil
+                </button>
+                <button onclick="toggleDarkMode()" id="dark-mode-btn"
+                    class="bg-amber-200 dark:bg-amber-900/60 hover:bg-amber-300 text-amber-900 dark:text-amber-200 px-3.5 py-2.5 rounded-xl font-medium transition text-sm">
+                    🌙 Modo Escuro
+                </button>
                 <button onclick="openModal()"
-                    class="bg-amber-800 hover:bg-amber-900 text-amber-50 px-4 py-2.5 rounded-xl font-medium shadow transition text-sm">✨
+                    class="bg-amber-800 hover:bg-amber-900 dark:bg-amber-700 dark:hover:bg-amber-600 text-amber-50 px-4 py-2.5 rounded-xl font-medium shadow transition text-sm">✨
                     Adicionar Livro</button>
                 <button onclick="logout()"
-                    class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-4 py-2.5 rounded-xl font-medium transition text-sm">Sair</button>
+                    class="bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:text-rose-300 text-rose-800 px-4 py-2.5 rounded-xl font-medium transition text-sm">Sair</button>
             </div>
         </header>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
-                <span class="text-2xl font-bold text-amber-900" id="stat-total">0</span>
-                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Total</p>
+            <div
+                class="bg-white dark:bg-[#1e1e1e] border border-amber-100 dark:border-amber-900/40 p-4 rounded-xl shadow-sm text-center transition-colors">
+                <span class="text-2xl font-bold text-amber-900 dark:text-amber-400" id="stat-total">0</span>
+                <p class="text-xs text-amber-700 dark:text-amber-500 uppercase tracking-wider font-semibold mt-1">Total
+                    na Estante</p>
             </div>
-            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
-                <span class="text-2xl font-bold text-emerald-700" id="stat-read">0</span>
-                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Lidos</p>
+            <div
+                class="bg-white dark:bg-[#1e1e1e] border border-amber-100 dark:border-amber-900/40 p-4 rounded-xl shadow-sm text-center transition-colors">
+                <span class="text-2xl font-bold text-emerald-700 dark:text-emerald-400" id="stat-read">0</span>
+                <p class="text-xs text-amber-700 dark:text-amber-500 uppercase tracking-wider font-semibold mt-1">Lidos
+                    / Meta</p>
             </div>
-            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
-                <span class="text-2xl font-bold text-blue-700" id="stat-reading">0</span>
-                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Lendo</p>
+            <div
+                class="bg-white dark:bg-[#1e1e1e] border border-amber-100 dark:border-amber-900/40 p-4 rounded-xl shadow-sm text-center transition-colors">
+                <span class="text-xl font-bold text-blue-700 dark:text-blue-400 truncate block"
+                    id="stat-favorite-genre">-</span>
+                <p class="text-xs text-amber-700 dark:text-amber-500 uppercase tracking-wider font-semibold mt-1">Gênero
+                    Favorito</p>
             </div>
-            <div class="bg-white border border-amber-100 p-4 rounded-xl shadow-sm text-center">
-                <span class="text-2xl font-bold text-amber-700" id="stat-rating">0.0</span>
-                <p class="text-xs text-amber-700 uppercase tracking-wider font-semibold mt-1">Média</p>
+            <div
+                class="bg-white dark:bg-[#1e1e1e] border border-amber-100 dark:border-amber-900/40 p-4 rounded-xl shadow-sm text-center transition-colors">
+                <span class="text-2xl font-bold text-amber-700 dark:text-amber-400" id="stat-rating">0.0</span>
+                <p class="text-xs text-amber-700 dark:text-amber-500 uppercase tracking-wider font-semibold mt-1">Média
+                    de Notas</p>
             </div>
         </div>
 
-        <div class="shelf-bg rounded-2xl p-6 min-h-[350px] relative">
-            <div class="absolute top-2 left-6 text-amber-200/60 text-xs font-serif uppercase tracking-widest">Sua
+        <div class="shelf-bg rounded-2xl p-6 min-h-[350px] relative transition-colors">
+            <div class="absolute top-2 left-6 text-amber-200/70 text-xs font-serif uppercase tracking-widest">Sua
                 Prateleira Privada</div>
             <div id="books-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6"></div>
         </div>
     </div>
 
-    <!-- Modal de Cadastro/Edição de Livro -->
+    <!-- MODAL DE PERSONALIZAÇÃO DO PERFIL -->
+    <div id="profile-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div
+            class="bg-white dark:bg-[#1e1e1e] dark:text-amber-100 rounded-2xl max-w-md w-full p-6 shadow-xl border border-amber-100 dark:border-amber-900">
+            <h2 class="text-2xl font-bold text-amber-900 dark:text-amber-400 mb-4">Personalizar Perfil</h2>
+            <form onsubmit="handleProfileSubmit(event)" class="space-y-4">
+                <div>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Nome
+                        de Exibição</label>
+                    <input type="text" id="profile-name" placeholder="Seu nome"
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">URL
+                        da Foto de Perfil (Avatar)</label>
+                    <input type="url" id="profile-avatar" placeholder="https://exemplo.com/foto.jpg"
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Meta
+                        de Leitura (Quantidade de Livros)</label>
+                    <input type="number" id="profile-goal" min="1" value="12"
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeProfileModal()"
+                        class="px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-amber-800 dark:bg-amber-700 text-amber-50 font-medium">Salvar
+                        Perfil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR/EDITAR LIVRO -->
     <div id="book-modal"
         class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-amber-100">
-            <h2 id="modal-title" class="text-2xl font-bold text-amber-900 mb-4">Adicionar Livro</h2>
+        <div
+            class="bg-white dark:bg-[#1e1e1e] dark:text-amber-100 rounded-2xl max-w-md w-full p-6 shadow-xl border border-amber-100 dark:border-amber-900">
+            <h2 id="modal-title" class="text-2xl font-bold text-amber-900 dark:text-amber-400 mb-4">Adicionar Livro</h2>
             <form id="book-form" onsubmit="handleBookSubmit(event)" class="space-y-4">
                 <input type="hidden" id="book-id">
                 <div>
-                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Título</label>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Título</label>
                     <input type="text" id="title" required
-                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Autor(a)</label>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Autor(a)</label>
                     <input type="text" id="author" required
-                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Link
+                        da Capa (URL da Imagem)</label>
+                    <input type="url" id="cover_image" placeholder="https://exemplo.com/capa.jpg"
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label
-                            class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Categoria</label>
-                        <input type="text" id="category" placeholder="Ex: Ficção" required
-                            class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                            class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Categoria</label>
+                        <input type="text" id="category" placeholder="Ex: Fantasia" required
+                            class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
                     </div>
                     <div>
                         <label
-                            class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Status</label>
+                            class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Status</label>
                         <select id="status"
-                            class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                            class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-white dark:bg-[#252525] outline-none">
                             <option value="Quero Ler">Quero Ler</option>
                             <option value="Lendo">Lendo</option>
                             <option value="Lido">Lido</option>
@@ -142,37 +239,47 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Avaliação (1 a
-                        5)</label>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Avaliação
+                        (1 a 5)</label>
                     <input type="number" id="rating" min="1" max="5" value="5"
-                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none">
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Resenha</label>
+                    <label
+                        class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider mb-1">Resenha</label>
                     <textarea id="review" rows="3"
-                        class="w-full px-4 py-2 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                        class="w-full px-4 py-2 border border-amber-200 dark:border-amber-900 rounded-xl bg-transparent outline-none"></textarea>
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" onclick="closeModal()"
-                        class="px-4 py-2 rounded-xl border border-amber-200 text-amber-800 hover:bg-amber-50">Cancelar</button>
+                        class="px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300">Cancelar</button>
                     <button type="submit"
-                        class="px-5 py-2 rounded-xl bg-amber-800 text-amber-50 hover:bg-amber-900 font-medium">Salvar</button>
+                        class="px-5 py-2 rounded-xl bg-amber-800 dark:bg-amber-700 text-amber-50 font-medium">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <footer class="text-center py-6 text-xs text-amber-800/80 mt-12 border-t border-amber-200/50">
-        Desenvolvido por Larissa Domiciano Gesaro - 6° período Engenharia de Software
+    <footer
+        class="text-center py-6 text-xs text-amber-800/80 dark:text-amber-500/80 mt-12 border-t border-amber-200/50 dark:border-amber-900/30">
+        Desenvolvido por Larissa Domiciano Gesaro - 7° período Engenharia de Software
     </footer>
 
+    <!-- SCRIPTS -->
     <script>
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:3000/api'
-            : '/api'; let isRegisterMode = false;
+            : '/api';
 
-        // Verificar se já existe token salvo ao abrir
+        let currentAuthMode = 'login';
+        let userReadingGoal = 12;
+
         window.onload = function () {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('dark-mode-btn').innerText = '☀️ Modo Claro';
+            }
             const token = localStorage.getItem('token');
             const email = localStorage.getItem('email');
             if (token) {
@@ -180,22 +287,94 @@
             }
         };
 
-        function toggleAuthMode() {
-            isRegisterMode = !isRegisterMode;
-            document.getElementById('auth-subtitle').innerText = isRegisterMode ? 'Crie sua conta para começar' : 'Faça login para acessar sua estante privada';
-            document.getElementById('auth-btn').innerText = isRegisterMode ? 'Cadastrar' : 'Entrar';
-            document.getElementById('auth-toggle-text').innerText = isRegisterMode ? 'Já tem uma conta? Faça login' : 'Não tem uma conta? Cadastre-se';
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const btn = document.getElementById('dark-mode-btn');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                btn.innerText = '🌙 Modo Escuro';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                btn.innerText = '☀️ Modo Claro';
+            }
+        }
+
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const subtitle = document.getElementById('auth-subtitle');
+            const btn = document.getElementById('auth-btn');
+            const passContainer = document.getElementById('password-field-container');
+            const passLabel = document.getElementById('password-label');
+            const confirmContainer = document.getElementById('confirm-password-container');
+
             document.getElementById('auth-error').classList.add('hidden');
+            document.getElementById('auth-success').classList.add('hidden');
+            document.getElementById('auth-form').reset();
+
+            ['login', 'register', 'recover'].forEach(m => {
+                const tab = document.getElementById(`tab-${m}`);
+                tab.className = m === mode
+                    ? "flex-1 pb-2 text-sm font-bold text-amber-900 dark:text-amber-400 border-b-2 border-amber-800 dark:border-amber-500 transition"
+                    : "flex-1 pb-2 text-sm font-semibold text-amber-600 dark:text-amber-500/70 hover:text-amber-900 dark:hover:text-amber-300 transition";
+            });
+
+            if (mode === 'login') {
+                subtitle.innerText = 'Faça login para acessar sua estante privada';
+                btn.innerText = 'Entrar';
+                passLabel.innerText = 'Senha';
+                passContainer.classList.remove('hidden');
+                confirmContainer.classList.add('hidden');
+                document.getElementById('auth-password').required = true;
+            } else if (mode === 'register') {
+                subtitle.innerText = 'Crie sua conta para começar';
+                btn.innerText = 'Cadastrar';
+                passLabel.innerText = 'Senha';
+                passContainer.classList.remove('hidden');
+                confirmContainer.classList.remove('hidden');
+                document.getElementById('auth-password').required = true;
+                document.getElementById('auth-confirm-password').required = true;
+            } else if (mode === 'recover') {
+                subtitle.innerText = 'Digite seu e-mail e a nova senha para redefinir';
+                btn.innerText = 'Redefinir Senha';
+                passLabel.innerText = 'Nova Senha';
+                passContainer.classList.remove('hidden');
+                confirmContainer.classList.add('hidden');
+                document.getElementById('auth-password').required = true;
+            }
         }
 
         async function handleAuth(event) {
             event.preventDefault();
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const endpoint = isRegisterMode ? '/register' : '/login';
             const errorDiv = document.getElementById('auth-error');
+            const successDiv = document.getElementById('auth-success');
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
 
             try {
+                if (currentAuthMode === 'recover') {
+                    const res = await fetch(API_URL + '/reset-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, newPassword: password })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Erro ao redefinir senha');
+                    successDiv.innerText = data.message;
+                    successDiv.classList.remove('hidden');
+                    setTimeout(() => switchAuthTab('login'), 2000);
+                    return;
+                }
+
+                if (currentAuthMode === 'register') {
+                    const confirmPassword = document.getElementById('auth-confirm-password').value;
+                    if (password !== confirmPassword) throw new Error('As senhas não coincidem!');
+                }
+
+                const endpoint = currentAuthMode === 'register' ? '/register' : '/login';
                 const res = await fetch(API_URL + endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -205,9 +384,9 @@
 
                 if (!res.ok) throw new Error(data.error || 'Erro na autenticação');
 
-                if (isRegisterMode) {
+                if (currentAuthMode === 'register') {
                     alert('Cadastro realizado com sucesso! Faça login.');
-                    toggleAuthMode();
+                    switchAuthTab('login');
                 } else {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('email', data.email);
@@ -230,7 +409,47 @@
         function showApp(email) {
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
-            document.getElementById('user-welcome').innerText = `Logado como: ${email}`;
+
+            // Carregar Perfil Salvo Localmente
+            const savedName = localStorage.getItem(`profile_name_${email}`) || email.split('@')[0];
+            const savedAvatar = localStorage.getItem(`profile_avatar_${email}`) || `https://ui-avatars.com/api/?name=${savedName}&background=8b5a2b&color=fff`;
+            userReadingGoal = Number(localStorage.getItem(`profile_goal_${email}`)) || 12;
+
+            document.getElementById('user-display-name').innerText = savedName;
+            document.getElementById('user-welcome').innerText = email;
+            document.getElementById('user-avatar').src = savedAvatar;
+
+            fetchBooks();
+        }
+
+        function openProfileModal() {
+            const email = localStorage.getItem('email');
+            document.getElementById('profile-name').value = localStorage.getItem(`profile_name_${email}`) || '';
+            document.getElementById('profile-avatar').value = localStorage.getItem(`profile_avatar_${email}`) || '';
+            document.getElementById('profile-goal').value = userReadingGoal;
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        function handleProfileSubmit(event) {
+            event.preventDefault();
+            const email = localStorage.getItem('email');
+            const name = document.getElementById('profile-name').value || email.split('@')[0];
+            const avatar = document.getElementById('profile-avatar').value || `https://ui-avatars.com/api/?name=${name}&background=8b5a2b&color=fff`;
+            const goal = Number(document.getElementById('profile-goal').value) || 12;
+
+            localStorage.setItem(`profile_name_${email}`, name);
+            localStorage.setItem(`profile_avatar_${email}`, avatar);
+            localStorage.setItem(`profile_goal_${email}`, goal);
+
+            userReadingGoal = goal;
+            document.getElementById('user-display-name').innerText = name;
+            document.getElementById('user-avatar').src = avatar;
+
+            closeProfileModal();
             fetchBooks();
         }
 
@@ -256,29 +475,34 @@
             const container = document.getElementById('books-container');
             container.innerHTML = '';
             if (books.length === 0) {
-                container.innerHTML = `<p class="text-amber-100 col-span-full text-center py-8">Sua estante está vazia. Clique em "Adicionar Livro"!</p>`;
+                container.innerHTML = `<p class="text-amber-100 dark:text-amber-300/70 col-span-full text-center py-8">Sua estante está vazia. Clique em "Adicionar Livro"!</p>`;
                 return;
             }
 
             books.forEach(book => {
                 const card = document.createElement('div');
-                card.className = 'bg-white/95 backdrop-blur border border-amber-200/50 rounded-2xl p-5 shadow-md flex flex-col justify-between transition hover:-translate-y-1';
-                const statusColor = book.status === 'Lido' ? 'bg-emerald-100 text-emerald-800' : book.status === 'Lendo' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800';
+                card.className = 'bg-white/95 dark:bg-[#1e1e1e] dark:text-amber-100 backdrop-blur border border-amber-200/50 dark:border-amber-900/60 rounded-2xl p-5 shadow-md flex flex-col justify-between transition hover:-translate-y-1';
+                const statusColor = book.status === 'Lido' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : book.status === 'Lendo' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
+
+                const coverHtml = book.cover_image
+                    ? `<img src="${book.cover_image}" alt="Capa" class="w-full h-44 object-cover rounded-xl mb-3 shadow-inner">`
+                    : '';
 
                 card.innerHTML = `
                     <div>
+                        ${coverHtml}
                         <div class="flex justify-between items-start gap-2 mb-2">
                             <span class="text-xs px-2.5 py-1 rounded-full font-medium ${statusColor}">${book.status}</span>
-                            <span class="text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-0.5 rounded">${book.category}</span>
+                            <span class="text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded">${book.category}</span>
                         </div>
-                        <h3 class="font-serif font-bold text-lg text-amber-900 leading-snug">${book.title}</h3>
-                        <p class="text-xs text-amber-700/80 mb-3">por ${book.author}</p>
-                        <div class="text-amber-500 text-sm mb-2">${'★'.repeat(book.rating)}${'☆'.repeat(5 - book.rating)}</div>
-                        <p class="text-xs text-amber-900/70 italic bg-amber-50/50 p-2.5 rounded-xl mb-4 line-clamp-3">"${book.review || 'Sem resenha.'}"</p>
+                        <h3 class="font-serif font-bold text-lg text-amber-900 dark:text-amber-200 leading-snug">${book.title}</h3>
+                        <p class="text-xs text-amber-700/80 dark:text-amber-400/80 mb-3">por ${book.author}</p>
+                        <div class="text-amber-500 text-sm mb-2">${'★'.repeat(book.rating || 0)}${'☆'.repeat(5 - (book.rating || 0))}</div>
+                        <p class="text-xs text-amber-900/70 dark:text-amber-300/80 italic bg-amber-50/50 dark:bg-amber-950/20 p-2.5 rounded-xl mb-4 line-clamp-3">"${book.review || 'Sem resenha.'}"</p>
                     </div>
-                    <div class="flex justify-end gap-2 pt-2 border-t border-amber-100">
-                        <button onclick="editBook(${book.id}, '${escapeHtml(book.title)}', '${escapeHtml(book.author)}', '${escapeHtml(book.category)}', '${book.status}', ${book.rating}, '${escapeHtml(book.review)}')" class="text-xs px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 font-medium">Editar</button>
-                        <button onclick="deleteBook(${book.id})" class="text-xs px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-medium">Excluir</button>
+                    <div class="flex justify-end gap-2 pt-2 border-t border-amber-100 dark:border-amber-900/50">
+                        <button onclick="editBook(${book.id}, '${escapeHtml(book.title)}', '${escapeHtml(book.author)}', '${escapeHtml(book.category)}', '${book.status}', ${book.rating}, '${escapeHtml(book.review)}', '${escapeHtml(book.cover_image)}')" class="text-xs px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 font-medium">Editar</button>
+                        <button onclick="deleteBook(${book.id})" class="text-xs px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 font-medium">Excluir</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -287,8 +511,21 @@
 
         function updateStats(books) {
             document.getElementById('stat-total').innerText = books.length;
-            document.getElementById('stat-read').innerText = books.filter(b => b.status === 'Lido').length;
-            document.getElementById('stat-reading').innerText = books.filter(b => b.status === 'Lendo').length;
+            const readCount = books.filter(b => b.status === 'Lido').length;
+            document.getElementById('stat-read').innerText = `${readCount}/${userReadingGoal}`;
+
+            if (books.length > 0) {
+                const categoryCounts = {};
+                books.forEach(b => {
+                    const cat = b.category ? b.category.trim() : 'Geral';
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+                let favorite = Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b);
+                document.getElementById('stat-favorite-genre').innerText = favorite;
+            } else {
+                document.getElementById('stat-favorite-genre').innerText = '-';
+            }
+
             const totalRating = books.reduce((acc, b) => acc + (Number(b.rating) || 0), 0);
             document.getElementById('stat-rating').innerText = books.length > 0 ? (totalRating / books.length).toFixed(1) : '0.0';
         }
@@ -300,11 +537,9 @@
             document.getElementById('book-modal').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('book-modal').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('book-modal').classList.add('hidden'); }
 
-        function editBook(id, title, author, category, status, rating, review) {
+        function editBook(id, title, author, category, status, rating, review, cover_image) {
             document.getElementById('book-id').value = id;
             document.getElementById('title').value = title;
             document.getElementById('author').value = author;
@@ -312,6 +547,7 @@
             document.getElementById('status').value = status;
             document.getElementById('rating').value = rating;
             document.getElementById('review').value = review === 'null' ? '' : review;
+            document.getElementById('cover_image').value = (cover_image === 'null' || !cover_image) ? '' : cover_image;
             document.getElementById('modal-title').innerText = 'Editar Livro';
             document.getElementById('book-modal').classList.remove('hidden');
         }
@@ -326,7 +562,8 @@
                 category: document.getElementById('category').value,
                 status: document.getElementById('status').value,
                 rating: Number(document.getElementById('rating').value),
-                review: document.getElementById('review').value
+                review: document.getElementById('review').value,
+                cover_image: document.getElementById('cover_image').value
             };
 
             const method = id ? 'PUT' : 'POST';
@@ -356,9 +593,7 @@
             }
         }
 
-        function escapeHtml(str) {
-            return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
-        }
+        function escapeHtml(str) { return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : ''; }
     </script>
 </body>
 
